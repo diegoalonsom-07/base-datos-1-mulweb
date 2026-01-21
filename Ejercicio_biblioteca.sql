@@ -155,7 +155,63 @@ GROUP BY NOMBRE;
 -- 13) Para cada género, muestre su nombre y el número medio de autores que
 --     tienen los libros de ese género. Nombra la segunda columna
 --     NUMERO_AUTORES_GENERO
-SELECT GENERO, AVG(COUNT(LECTOR))
+SELECT GENERO, AVG(NUMERO_AUTORES) AS "MEDIA DE AUTORES POR GENERO"
+FROM (SELECT LIBRO, COUNT(AUTOR) AS NUMERO_AUTORES
+	  FROM AUTORIAS
+      GROUP BY LIBRO) NA
+INNER JOIN LIBROS L ON L.IDLIBRO = NA.LIBRO
+GROUP BY GENERO;
+
+-- 14) Para cada cliente, muestre su nombre y el número total de páginas que
+--     ha leído (es decir, el número de páginas de todos los libros que ha tomado
+--     prestados). Suponemos que han leído todos los libros. Incluya todos los
+--     libros, incluso los que aún no han devuelto.
+-- 			- Mostrar sólo los resultados de los usuarios que hayan leído más de 1.000
+-- 			  páginas
+-- 			- eS NORMAL QUE NO SALGA NINGUNO, ES ASI EL EJERCICIO
+SELECT NOMBRE, SUM(PAGINAS) AS PAGINAS_LEIDAS
+FROM LECTORES LE
+INNER JOIN PRESTAMOS P ON LE.IDLECTOR = P.LECTOR
+INNER JOIN LIBROS L ON L.IDLIBRO = P.LIBRO
+GROUP BY NOMBRE
+HAVING PAGINAS_LEIDAS > 1000
+ORDER BY PAGINAS_LEIDAS DESC;
+
+-- 15) Mostrar el número total de usuarios que nunca han tomado libros
+--     prestados.
+SELECT COUNT(IDLECTOR) AS LECTORES_SIN_PRESTAMOS
+FROM LECTORES LE
+WHERE IDLECTOR NOT IN (SELECT LECTOR 
+					   FROM PRESTAMOS);
+
+-- 16) Para cada autor, muestre cuántos usuarios diferentes han tomado
+--     prestado sus libros.
+SELECT NOMBRE, COUNT(DISTINCT LECTOR) AS LECTORES_DIFERENTES
+FROM AUTORES A 
+INNER JOIN AUTORIAS AUS ON A.IDAUTOR = AUS.AUTOR
+INNER JOIN LIBROS L ON L.IDLIBRO = AUS.LIBRO
+INNER JOIN PRESTAMOS P ON P.LIBRO = L.IDLIBRO
+GROUP BY NOMBRE;
+
+-- 17) Encuentre el libro o libros más antiguos de la base de datos (es decir, el
+--     libro o libros con el año de publicación más antiguo). Muestre sólo dos
+--     columnas: Título y Año de publicación.
+-- 			- Recuerde que puede haber más de un libro con el año de publicación más
+-- 			  antiguo.
+SELECT TITULO, AÑO_PUBLI AS AÑO_PUBLICACION
+FROM LIBROS
+WHERE AÑO_PUBLI = (SELECT MIN(AÑO_PUBLI) 
+				   FROM LIBROS);
+
+-- 18) Encuentre los nombres de todos los usuarios que han tomado prestados
+--     un número de libros superior a la media. Indique el número de libros
+--     prestados junto con su nombre (el del lector).
+
+
+-- 19) Encontrar el autor que escribió más libros.
+
+
+
 
 
 
