@@ -1,0 +1,291 @@
+/*CREAR DEPARTAMENTOS*/
+CREATE TABLE DEPARTAMENTOS(
+			 N_DPTO INT PRIMARY KEY,
+			 NOMBRE VARCHAR(15),
+			 LOCALIDAD VARCHAR(20));
+
+/*INSERTAR DATOS DEPARTAMENTOS*/
+INSERT INTO DEPARTAMENTOS VALUES('10', 'Contabilidad', 'Sevilla');
+INSERT INTO DEPARTAMENTOS VALUES('20', 'Investigación', 'Madrid');
+INSERT INTO DEPARTAMENTOS VALUES('30', 'Ventas', 'Barcelona');
+INSERT INTO DEPARTAMENTOS VALUES('40', 'Producción', 'Bilbao');
+SELECT * FROM DEPARTAMENTOS;
+
+/*CREAR EMPLEADOS*/
+CREATE TABLE EMPLEADOS(
+			 IDEMPLEADOS INT PRIMARY KEY,
+			 NOMBRE VARCHAR(15),
+			 OFICIO VARCHAR(20),
+			 DIR INT,
+			 FECHA_ALTA DATE ,
+			 SALARIO INT,
+			 COMISION INT,
+             N_DPTO INT,
+			 FOREIGN KEY (N_DPTO) REFERENCES DEPARTAMENTOS (N_DPTO));
+
+/*INSERTAR DATOS EMPLEADOS*/
+INSERT INTO EMPLEADOS VALUES('7369', 'Sánchez', 'Empleado', '7902', '1990/12/17', '1040', NULL, '20' );
+INSERT INTO EMPLEADOS VALUES('7499', 'Arroyo', 'Vendedor', '7698', '1990/02/20', '1500', '390', '30' );
+INSERT INTO EMPLEADOS VALUES('7521', 'Sala', 'Vendedor', '7698', '1991/02/22', '1625', '650', '30' );
+INSERT INTO EMPLEADOS VALUES('7566', 'Jiménez', 'Director', '7839', '1991/04/02', '2900', NULL, '20' );
+INSERT INTO EMPLEADOS VALUES('7654', 'Martin', 'Vendedor', '7698', '1991/09/29', '1600', '1020', '30' );
+INSERT INTO EMPLEADOS VALUES('7698', 'Negro', 'Director', '7839', '1991/05/01', '3005', NULL, '30' );
+INSERT INTO EMPLEADOS VALUES('7782', 'Cerezo', 'Director', '7839', '1991/06/09', '2885', NULL, '10' );
+INSERT INTO EMPLEADOS VALUES('7788', 'Gil', 'Analista', '7566', '1991/11/09', '3000', NULL, '20' );
+INSERT INTO EMPLEADOS VALUES('7839', 'Rey', 'Presidente', NULL, '1991/11/17', '4100', NULL, '10' );
+INSERT INTO EMPLEADOS VALUES('7844', 'Tovar', 'Vendedor', '7698', '1991/09/08', '1350', '0', '30' );
+INSERT INTO EMPLEADOS VALUES('7876', 'Alonso', 'Empleado', '7788', '1991/09/23', '1430', NULL, '20' );
+INSERT INTO EMPLEADOS VALUES('7900', 'Jimeno', 'Empleado', '7698', '1991/12/03', '1335', NULL, '30' );
+INSERT INTO EMPLEADOS VALUES('7902', 'Fernández', 'Analista', '7566', '1991/12/03', '3000', NULL, '20' );
+INSERT INTO EMPLEADOS VALUES('7934', 'Muñoz', 'Empleado', '7782', '1992/01/23', '1690', NULL, '10' );
+
+SELECT * FROM EMPLEADOS;
+
+
+-- ==================================================================================================================
+
+-- Ej. 1.- Selecciona el apellido, el oficio y la localidad de los departamentos de aquellos empleados cuyo oficio sea “ANALISTA”.
+SELECT E.NOMBRE, E.OFICIO, D.LOCALIDAD 
+FROM EMPLEADOS E
+INNER JOIN DEPARTAMENTOS D  ON E.N_DPTO = D.N_DPTO 
+WHERE E.OFICIO="ANALISTA";
+
+-- Ej. 2.- Obtén los datos de los empleados cuyo director (columna DIR de la tabla EMPLEADOS) sea “CEREZO”.
+SELECT * 
+FROM EMPLEADOS E
+WHERE DIR = (SELECT IDEMPLEADOS
+			 FROM EMPLEADOS
+             WHERE NOMBRE = 'CEREZO');
+
+
+-- Ej. 3.- Obtén los datos de los empleados del departamento de “VENTAS”.
+SELECT E.* 
+FROM EMPLEADOS E 
+WHERE E.N_DPTO = (SELECT D.N_DPTO
+				  FROM DEPARTAMENTOS D
+                  WHERE D.NOMBRE = 'VENTAS');
+
+-- Ej. 4.- Obtén los datos de los departamentos que NO tengan empleados
+SELECT * 
+FROM DEPARTAMENTOS 
+WHERE N_DPTO NOT IN (SELECT N_DPTO 
+					 FROM EMPLEADOS);
+
+-- Ej. 5.- Obtén los datos de los departamentos que tengan empleados.
+SELECT * 
+FROM DEPARTAMENTOS 
+WHERE N_DPTO IN (SELECT N_DPTO 
+				 FROM EMPLEADOS);
+
+-- Ej. 6.- Obtén el nombre y el salario de los empleados que superen todos los salarios de los empleados del departamento 20.
+SELECT NOMBRE, SALARIO, N_DPTO 
+FROM EMPLEADOS 
+WHERE SALARIO > (SELECT MAX(SALARIO) 
+				 FROM EMPLEADOS 
+                 WHERE N_DPTO = 20);
+
+
+
+-- Ej 1 profe
+SELECT NOMBRE, N_DPTO FROM EMPLEADOS WHERE N_DPTO = 20;
+
+-- Ej 2 profe
+SELECT IDEMPLEADOS, NOMBRE, OFICIO, N_DPTO FROM EMPLEADOS WHERE N_DPTO < 30 ORDER BY N_DPTO;
+
+-- Ej 3 profe
+SELECT NOMBRE FROM EMPLEADOS WHERE NOMBRE >='A' AND NOMBRE >='M';
+
+-- Ej 4 profe
+SELECT NOMBRE, SALARIO FROM EMPLEADOS WHERE SALARIO BETWEEN 1000 AND 2000 ORDER BY SALARIO DESC;
+
+-- Ej 5 profe
+SELECT NOMBRE, N_DPTO FROM EMPLEADOS WHERE N_DPTO IN (10,30,40) ORDER BY N_DPTO;
+
+-- Ej 6 profe
+SELECT NOMBRE FROM EMPLEADOS WHERE NOMBRE LIKE ('M%');
+
+-- Ej 7 profe
+SELECT NOMBRE FROM EMPLEADOS WHERE NOMBRE LIKE ('%R%');
+
+-- Ej 8 profe
+SELECT NOMBRE, SALARIO FROM EMPLEADOS WHERE SALARIO = (SELECT MAX(sALARIO) FROM EMPLEADOS);
+SELECT NOMBRE, MAX(SALARIO) FROM EMPLEADOS GROUP BY NOMBRE;
+SELECT NOMBRE, SALARIO FROM EMPLEADOS WHERE SALARIO >= ALL (SELECT SALARIO FROM EMPLEADOS);
+SELECT N_DPTO, NOMBRE FROM DEPARTAMENTOS WHERE EXISTS (SELECT DISTINCT N_DPTO FROM EMPLEADOS WHERE EMPLEADOS.N_DPTO = DEPARTAMENTOS.N_DPTO);
+SELECT NOMBRE, OFICIO FROM EMPLEADOS WHERE OFICIO = (SELECT OFICIO FROM EMPLEADOS WHERE NOMBRE ='GIL'); -- EXCEPT (SELECT OFICIO FROM EMPLEADOS WHERE NOMBRE ='GIL');
+SELECT NOMBRE, OFICIO, N_DPTO FROM EMPLEADOS WHERE OFICIO IN (SELECT OFICIO FROM EMPLEADOS WHERE N_DPTO = 20) ORDER BY N_DPTO;
+
+
+
+
+
+-- ==================================================================================================================
+-- ==================================================================================================================
+/*CREAR LIBRERÍA*/
+CREATE TABLE LIBRERIA
+		    (TEMA VARCHAR (50) PRIMARY KEY,
+             ESTANTE VARCHAR (2),
+             EJEMPLARES INT);
+/*INSERTAR DATOS*/
+INSERT INTO LIBRERIA VALUES ('INFORMÁTICA', 'A', 15);             
+INSERT INTO LIBRERIA VALUES ('ECONOMÍA', 'A', 10);
+INSERT INTO LIBRERIA VALUES ('DEPORTES', 'B', 8);
+INSERT INTO LIBRERIA VALUES ('FILOSOFÍA', 'C', 7);
+INSERT INTO LIBRERIA VALUES ('DIBUJO', 'C', 10);
+INSERT INTO LIBRERIA VALUES ('MEDICINA', 'C', 16);
+INSERT INTO LIBRERIA VALUES ('BIOLOGÍA', 'A', 11);
+INSERT INTO LIBRERIA VALUES ('GEOLOGÍA', 'D', 7);
+INSERT INTO LIBRERIA VALUES ('SOCIEDAD', 'D', 9);
+INSERT INTO LIBRERIA VALUES ('LABORES', 'B', 20);
+INSERT INTO LIBRERIA VALUES ('JARDINERÍA', 'E', 6);
+
+SELECT * FROM LIBRERIA;
+
+
+-- ==================================================================================================================
+
+-- Ej. 7.- Visualiza el tema, estante y ejemplares de las filas de LIBRERÍA con ejemplares comprendidos entre 8 y 15.
+SELECT TEMA, ESTANTE, EJEMPLARES 
+FROM LIBRERIA 
+WHERE EJEMPLARES BETWEEN 8 AND 15;
+
+-- Ej. 8.- Visualiza las columnas TEMA, ESTANTE y EJEMPLARES de las filas cuyo ESTANTE no esté comprendido entre la “B” y la “D”.
+SELECT TEMA, ESTANTE, EJEMPLARES 
+FROM LIBRERIA 
+WHERE ESTANTE NOT BETWEEN 'B' AND 'D';
+
+-- Ej. 9.- Visualiza todos los temas de LIBRERÍA cuyo número de ejemplares sea inferior a los que hay en “MEDICINA”.
+SELECT TEMA 
+FROM LIBRERIA 
+WHERE EJEMPLARES < (SELECT EJEMPLARES 
+					FROM LIBRERIA 
+                    WHERE TEMA = 'MEDICINA');
+
+-- Ej. 10.- Visualiza los temas de LIBRERÍA cuyo número de ejemplares no esté entre 15 y 20 ambos inclusive.
+SELECT TEMA, EJEMPLARES 
+FROM LIBRERIA
+WHERE TEMA NOT IN (SELECT TEMA
+						 FROM LIBRERIA 
+                         WHERE EJEMPLARES >= 15 AND EJEMPLARES <= 20);
+ 
+ 
+ 
+ 
+ 
+-- ==================================================================================================================
+-- ==================================================================================================================
+/*CREAR TABLA NOTAS*/
+CREATE TABLE NOTAS
+			(DNI VARCHAR(9) REFERENCES ALUMNOS,
+             COD INT REFERENCES ASIGNATURAS,
+             NOTA INT,
+             PRIMARY KEY (DNI, COD));
+
+INSERT INTO NOTAS VALUES ('16344345', 1, 6);
+INSERT INTO NOTAS VALUES ('16344345', 7, 4);
+INSERT INTO NOTAS VALUES ('16344345', 3, 6);
+INSERT INTO NOTAS VALUES ('16344345', 2, 5);
+INSERT INTO NOTAS VALUES ('16344345', 6, 8);
+INSERT INTO NOTAS VALUES ('16344345', 5, 6);
+INSERT INTO NOTAS VALUES ('16344345', 4, 5);
+INSERT INTO NOTAS VALUES ('16448242', 7, 5);
+INSERT INTO NOTAS VALUES ('16448242', 6, 4);
+INSERT INTO NOTAS VALUES ('16448242', 5, 8);
+INSERT INTO NOTAS VALUES ('16448242', 4, 6);
+INSERT INTO NOTAS VALUES ('16882942', 4, 8);
+INSERT INTO NOTAS VALUES ('16882942', 5, 7);
+INSERT INTO NOTAS VALUES ('16882942', 6, 8);
+INSERT INTO NOTAS VALUES ('16882942', 7, 9);
+             
+/*CREAR TABLA ASIGNATURAS*/
+CREATE TABLE ASIGNATURAS (
+    COD INT PRIMARY KEY,
+    NOMBRE VARCHAR(45)
+);
+
+INSERT INTO ASIGNATURAS VALUES (1, 'PROGRAMACIÓN');
+INSERT INTO ASIGNATURAS VALUES (2, 'SIST. INFORMÁTICOS');
+INSERT INTO ASIGNATURAS VALUES (3, 'BASES DE DATOS');
+INSERT INTO ASIGNATURAS VALUES (4, 'FOL');
+INSERT INTO ASIGNATURAS VALUES (5, 'INGLÉS TÉCNICO');
+INSERT INTO ASIGNATURAS VALUES (6, 'LENGUAJES DE MARCAS');
+INSERT INTO ASIGNATURAS VALUES (7, 'SEGURIDAD');
+INSERT INTO ASIGNATURAS VALUES (8, 'ENTORNOS');
+
+/*CREAR TABLA ALUMNOS*/
+CREATE TABLE ALUMNOS 
+			(DNI VARCHAR(9) NOT NULL PRIMARY KEY,
+			 APENOM VARCHAR(45),
+			 DIREC VARCHAR(100),
+			 POBLA VARCHAR(45),
+			 TELEF INT(9) NULL);
+             
+INSERT INTO ALUMNOS VALUES ('16344345', 'ALCALDE GARCÍA, ELENA', 'C/LAS MATAS, 24', 'MADRID', 917766545); 
+INSERT INTO ALUMNOS VALUES ('16448242', 'CERRATO VELA, LUIS', 'C/MINA, 28-3A', 'MADRID', 916566545);
+INSERT INTO ALUMNOS VALUES ('16882942', 'DÍAZ FERNÁNDEZ, MARÍA', 'C/LUIS VIVES, 25', 'MÓSTOLES', 915577545);
+
+
+-- ==================================================================================================================
+-- Ej. 11.-Inserta el alumno con DNI 56882942 y APENOM Díaz Fernández, María
+INSERT INTO ALUMNOS (DNI, APENOM) VALUES ('56882942', 'DIAZ FERNANDEZ, MARIA'); 
+
+-- Ej. 12.- Visualiza todas las asignaturas que contengan DOS letras “o” en su interior y tengan alumnos matriculados de “Madrid”.
+
+SELECT NOMBRE
+FROM ASIGNATURAS
+WHERE NOMBRE LIKE('%O%O%') AND
+      COD IN (SELECT COD
+                  FROM NOTAS N
+                  INNER JOIN ALUMNOS A ON A.DNI = N.DNI
+                  WHERE POBLA = 'MADRID');
+
+-- Ej. 13.- Visualiza los nombres de alumnos de “Madrid” que tengan alguna asignatura suspendida.
+SELECT A.APENOM
+FROM ALUMNOS A
+INNER JOIN NOTAS N ON N.DNI = A.DNI
+WHERE A.POBLA = 'MADRID' AND
+	  N.NOTA < 5;
+      
+-- Ej. 14.a.- Obtén los datos de las asignaturas que no tengan alumnos. 
+SELECT *
+FROM ASIGNATURAS
+WHERE COD NOT IN (
+    SELECT COD
+    FROM NOTAS
+);
+
+-- Ej. 14.b.- Obtén el nombre y apellido de los alumnos que tengan nota en la asignatura con código 1.
+SELECT A.APENOM
+FROM ALUMNOS A
+INNER JOIN NOTAS N ON N.DNI = A.DNI
+WHERE N.COD = 1;
+
+-- Ej. 15.a.- Obtén el nombre y apellido de los alumnos que no tengan nota en la asignatura con código 1. 
+SELECT A.APENOM
+FROM ALUMNOS A
+LEFT JOIN NOTAS N 
+       ON A.DNI = N.DNI AND N.COD = 1
+WHERE N.DNI IS NULL;
+
+
+-- Ej. 15.b.- Muestra los nombres de alumnos que tengan la misma nota que tiene “Díaz Fernández, María” en “FOL” en alguna asignatura.
+SELECT DISTINCT A.APENOM
+FROM ALUMNOS A
+INNER JOIN NOTAS N ON A.DNI = N.DNI
+WHERE N.NOTA = (
+    SELECT N2.NOTA
+    FROM NOTAS N2
+    INNER JOIN ALUMNOS A2 ON A2.DNI = N2.DNI
+    INNER JOIN ASIGNATURAS S2 ON S2.COD = N2.COD
+    WHERE A2.APENOM = 'DÍAZ FERNÁNDEZ, MARÍA'
+      AND S2.NOMBRE = 'FOL'
+);
+
+-- Ej. 16.- Alumnos con todo aprobado
+SELECT DISTINCT AL.DNI, APENOM
+FROM ALUMNOS AL
+INNER JOIN NOTAS N ON AL.DNI = N.DNI
+GROUP BY AL.DNI, APENOM
+HAVING MIN(N.NOTA) >= 5;
+
+
