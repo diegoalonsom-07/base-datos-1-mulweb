@@ -206,10 +206,23 @@ WHERE AÑO_PUBLI = (SELECT MIN(AÑO_PUBLI)
 -- 18) Encuentre los nombres de todos los usuarios que han tomado prestados
 --     un número de libros superior a la media. Indique el número de libros
 --     prestados junto con su nombre (el del lector).
-
+SELECT NOMBRE, COUNT(P.LIBRO) AS NUM_LIBROS
+FROM LECTORES L
+INNER JOIN PRESTAMOS P ON L.IDLECTOR = P.LECTOR
+GROUP BY L.NOMBRE
+HAVING COUNT(P.LIBRO) > (SELECT AVG(LIBROS_PRESTADOS)
+						 FROM (SELECT COUNT(P.LIBRO) AS LIBROS_PRESTADOS
+							   FROM PRESTAMOS P
+                               GROUP BY P.LECTOR)LP);
 
 -- 19) Encontrar el autor que escribió más libros.
-
+SELECT A.NOMBRE, COUNT(LIBRO) AS LIBROS_ESCRITOS
+FROM AUTORES A
+INNER JOIN AUTORIAS AU ON A.IDAUTOR = AU.AUTOR
+GROUP BY A.NOMBRE
+HAVING COUNT(LIBRO) >= ALL (SELECT COUNT(LIBRO) AS LIBROS_ESCRITOS
+							FROM AUTORIAS
+                            GROUP BY AUTOR);
 
 
 
