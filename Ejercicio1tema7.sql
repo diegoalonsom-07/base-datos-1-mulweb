@@ -189,7 +189,7 @@ FROM ARTICULOS;
 INSERT INTO PEDIDOS (NIF, COD_ARTICULO, FECHA_PEDIDO, UNIDADES_PEDIDAS)
 SELECT T.NIF, A.COD_ARTICULO, CURDATE(), 30
 FROM TIENDAS T, ARTICULOS A
-JOIN FABRICANTES F ON A.COD_FABRICANTE = F.COD_FABRICANTE
+INNER JOIN FABRICANTES F ON A.COD_FABRICANTE = F.COD_FABRICANTE
 WHERE T.PROVINCIA = 'MADRID'
 AND F.NOMBRE = 'GALLO';
 
@@ -207,6 +207,58 @@ AND A.CATEGORIA = 'PRIMERA';
 --    pasos:
 -- 			a) Crear una tabla auxiliar (llamada TIENDAS2) con los mismos datos que TIENDAS.
 -- 			b) Usar la tabla TIENDAS2 en el SELECT del UPDATE
+CREATE TABLE TIENDAS2
+(SELECT *
+ FROM TIENDAS);
+ 
+ UPDATE TIENDAS
+ SET NIF = (SELECT NIF
+			FROM TIENDAS2
+            WHERE NIF = '2222-A'),
+	  NOMBRE = (SELECT NOMBRE
+				FROM TIENDAS2
+                WHERE NIF = '2222-A')
+WHERE NIF = '1111-A';
+
+-- 6) Cambia todos los artículos de ‘Primera’ categoría a ‘Segunda’ categoría del país
+--    ‘ITALIA’.
+UPDATE ARTICULOS
+SET CATEGORIA = 'Segunda'
+WHERE CATEGORIA = 'Primera'
+AND COD_FABRICANTE IN (SELECT COD_FABRICANTE 
+					   FROM FABRICANTES 
+                       WHERE PAIS = 'ITALIA');
+
+-- 7) Modifica aquellos pedidos en los que la cantidad pedida sea superior a las
+-- existencias del artículo, asignando el 20% de las existencias a la cantidad que se ha
+-- pedido.
+UPDATE PEDIDOS P
+INNER JOIN ARTICULOS A ON A.COD_ARTICULO = P.COD_ARTICULO
+SET UNIDADES_PEDIDAS = (0.2 * EXISTENCIAS)
+WHERE UNIDADES_PEDIDAS > EXISTENCIAS;
+
+
+UPDATE PEDIDOS
+SET UNIDADES_PEDIDAS = (SELECT 0.20*EXISTENCIAS
+						FROM ARTICULOS A
+                        WHERE A.COD_ARTICULO = PEDIDOS.CODARTICULO)
+WHERE UNIDADES_PEDIDAS > (SELECT EXISTENCIAS
+						  FROM ARTICULOS A
+                          WHERE A.COD_ARTICULO = PEDIDOS.CODARTICULO);
+
+-- 8) Elimina aquellas tiendas que no han realizado ventas.
+DELETE T.*
+FROM TIENDAS T 
+WHERE NIF NOT IN (SELECT DISTINCT NIF
+				  FROM VENTAS V);
+                  
+-- 9) Elimina los artículos que no hayan tenido ni PEDIDOS ni VENTAS.
+DELETE A.*
+FROM ARTICULOS A
+WHERE COD_ARTICULO NOT IN (SELECT DISTINCT V.COD_ARTICULO
+						   FROM VENTAS V) AND COD_ARTICULO NOT IN (SELECT DISTINCT P.COD_ARTICULO
+																   FROM PEDIDOS P);
+
 
 
 
