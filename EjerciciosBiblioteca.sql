@@ -79,11 +79,23 @@ CALL MEDIA_DIAS_PRESTADOS;
 --    lector y mostrará el nombre del lector y el total de libros que tiene prestados, y de éstos
 --    cuántos llevan más de 15 días. Este último dato debe dejarlo en el último parámetro del
 --    procedimiento, llamado reclamar.
-CALL CONSULTA_LECTOR(1);
+CALL CONSULTA_LECTOR(20, @RECLAMAR);
+SELECT @RECLAMAR;
 
 -- 3) Crea un procedimiento LIBROS_POR_TIPO_LECTOR que muestre cuántos lectores hay de
 --    cada tipo de lector, sabiendo que el tipo de lector es un número entero entre 1 y 10.
 CALL LIBROS_POR_TIPO_LECTOR;
+
+-- 4) Crea una función que dado el código de un libro devuelva un cero si el libro está en la
+--    biblioteca, si está prestado, el nº de días que lleva prestado y -1 si el libro no existe.
+CALL Ejercicio_4(13, @resultado);
+Select @resultado;
+
+-- 5) Crea un procedimiento CONSULTA_LIBRO que permita consultar el estado de un libro. Se
+--    le dará un código de un libro y mostrará un mensaje si el libro no existe; en caso de que sí
+--    exista, mostrará el título y si está prestado mostrará el nombre del lector que lo tiene o en
+--    caso de no estar prestado, avisará de que se encuentra disponible en la biblioteca.
+CALL CONSULTA_LIBRO(13);
 
 
 

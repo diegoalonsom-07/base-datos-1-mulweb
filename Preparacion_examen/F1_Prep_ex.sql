@@ -148,14 +148,14 @@ GROUP BY NOMEQUIPO;
 SELECT NOMPILOTO, COUNT(POSICION) AS PODIOS
 FROM PILOTOS P
 INNER JOIN RESULTADOS R ON R.CODPILOTO = P.CODPILOTO
-WHERE POSICION >=3
+WHERE POSICION <= 3
 GROUP BY NOMPILOTO
 ORDER BY PODIOS DESC;
 
 -- J. Muestra los equipos cuyo presupuesto medio por piloto sea superior a 100,000.
 SELECT E.NOMEQUIPO
 FROM EQUIPOS E
-JOIN PILOTOS P ON E.CODEQUIPO = P.EQUIPO
+INNER JOIN PILOTOS P ON E.CODEQUIPO = P.EQUIPO
 GROUP BY E.NOMEQUIPO, E.PRESUPUESTO
 HAVING (E.PRESUPUESTO / COUNT(P.CODPILOTO)) > 100000;
 
@@ -175,11 +175,136 @@ WHERE CODGP NOT IN (SELECT CODGP
 -- M. Crea un informe que muestre: Nombre del Piloto, Nombre de su Equipo, Suma total de PUNTOS conseguidos en todos los GP y el Nombre de su Amigo. (Necesitarás unir 5 tablas: PILOTOS, EQUIPOS, RESULTADOS, PUNTUACIONES y otra vez PILOTOS para el amigo).
 SELECT P.NOMPILOTO, E.NOMEQUIPO, SUM(PT.PUNTOS) AS Total_Puntos, A.NOMPILOTO AS Nombre_Amigo
 FROM PILOTOS P
-JOIN EQUIPOS E ON P.EQUIPO = E.CODEQUIPO
-JOIN RESULTADOS R ON P.CODPILOTO = R.CODPILOTO
-JOIN PUNTUACIONES PT ON R.POSICION = PT.POSICION
+INNER JOIN EQUIPOS E ON P.EQUIPO = E.CODEQUIPO
+INNER JOIN RESULTADOS R ON P.CODPILOTO = R.CODPILOTO
+INNER JOIN PUNTUACIONES PT ON R.POSICION = PT.POSICION
 LEFT JOIN PILOTOS A ON P.AMIGO = A.CODPILOTO
 GROUP BY P.NOMPILOTO, E.NOMEQUIPO, A.NOMPILOTO;
+
+-- N. Muestra los nombres de los pilotos en mayúsculas y su año de nacimiento (usa la función YEAR o similar).
+SELECT NOMPILOTO, FECHA_NACIMIENTO, timestampdiff(YEAR, FECHA_NACIMIENTO, CURDATE()) AS AÑOS
+FROM PILOTOS P;
+
+-- O. Calcula la antigüedad de los pilotos: Nombre y cuántos años han pasado desde su nacimiento hasta hoy.
+SELECT NOMPILOTO, FECHA_NACIMIENTO, timestampdiff(YEAR, FECHA_NACIMIENTO, CURDATE()) AS AÑOS
+FROM PILOTOS P;
+
+-- P. Lista los circuitos donde se han corrido Grandes Premios, eliminando los duplicados si los hubiera.
+SELECT DISTINCT CIRCUITO 
+FROM GP;
+
+-- Q. Muestra el nombre del equipo y el presupuesto formateado con el símbolo '$' al principio (usa CONCAT).
+SELECT NOMEQUIPO, CONCAT(PRESUPUESTO, ' $') AS PRESUPUESTO
+FROM EQUIPOS;
+
+-- R. Encuentra el nombre del piloto que tiene el sueldo más alto de toda la base de datos (sin usar LIMIT).
+SELECT NOMPILOTO
+FROM PILOTOS P
+WHERE SUELDO = (SELECT MAX(SUELDO)
+				FROM PILOTOS);
+
+-- S. Obtén el nombre de los pilotos cuya inicial sea 'F' y que pertenezcan al equipo con código 3.
+SELECT NOMPILOTO
+FROM PILOTOS
+WHERE NOMPILOTO LIKE 'F%'
+	  AND EQUIPO = 3;
+
+-- T. Lista los Grandes Premios (nombre y lugar) que se celebraron en la primera mitad del año 2020 (entre enero y junio).
+SELECT NOMGP, LUGAR
+FROM GP
+WHERE FECHA BETWEEN '2020-01-01' AND '2020-06-30';
+
+-- U. Muestra cada piloto y su sueldo mensual (sueldo dividido por 12), redondeado a dos decimales.
+SELECT NOMPILOTO, ROUND(SUELDO / 12.0, 2) AS SUELDO_MENSUAL
+FROM PILOTOS;
+
+-- V. Encuentra qué equipos tienen más de 2 pilotos registrados en la tabla PILOTOS.
+SELECT E.NOMEQUIPO, COUNT(P.CODPILOTO) AS Numero_Pilotos
+FROM EQUIPOS E
+INNER JOIN PILOTOS P ON E.CODEQUIPO = P.EQUIPO
+GROUP BY E.NOMEQUIPO
+HAVING COUNT(P.CODPILOTO) > 2;
+
+-- W. Muestra el nombre de los pilotos y el nombre del GP para todos aquellos que NO lograron puntuar (posiciones mayores a 10).
+SELECT P.NOMPILOTO, G.NOMGP, R.POSICION
+FROM PILOTOS P
+INNER JOIN RESULTADOS R ON P.CODPILOTO = R.CODPILOTO
+INNER JOIN GP G ON R.CODGP = G.CODGP
+WHERE R.POSICION > 10;
+
+-- 1. INSERT masivo: Da de alta un resultado de '1ª' posición para todos los pilotos del equipo 'Ferrari' 
+-- en un nuevo Gran Premio con CODGP = 5, con fecha de hoy.
+-- Insertar un nuevo Gran Premio con el ID 5
+INSERT INTO GP (CODGP, NOMGP, CIRCUITO, FECHA, LUGAR, CONTINENTE) 
+VALUES (5, 'Mónaco', 'Monte Carlo', '2026-05-24', 'Mónaco', 'EUROPA');
+
+INSERT INTO RESULTADOS (CODPILOTO, CODGP, POSICION)
+SELECT CODPILOTO, 5, 1
+FROM PILOTOS
+WHERE EQUIPO = (SELECT CODEQUIPO FROM EQUIPOS WHERE NOMEQUIPO = 'Ferrari');
+
+
+-- 2. INSERT con subconsulta: Inscribe a todos los pilotos que ganan más de 10,000 euros 
+-- en el Gran Premio de 'España' (CODGP = 4), asignándoles la posición 10 a todos.
+INSERT INTO RESULTADOS (CODPILOTO, CODGP, POSICION)
+SELECT CODPILOTO, 4, 10
+FROM PILOTOS
+WHERE CODPILOTO IN (SELECT CODPILOTO
+					FROM PILOTOS
+					WHERE SUELDO >= 10000);
+
+
+-- 3. UPDATE complejo: Sube el sueldo un 15% a todos los pilotos cuyo equipo tenga un 
+-- presupuesto superior a 400,000 euros.
+UPDATE PILOTOS P
+INNER JOIN EQUIPOS E ON E.CODEQUIPO = P.EQUIPO
+SET SUELDO = SUELDO * 1.15
+WHERE E.PRESUPUESTO > 400000;
+
+
+
+-- 4. UPDATE con Join: Cambia el equipo de todos los pilotos cuyo equipo actual sea 'McLaren' 
+-- para que ahora pertenezcan al equipo 'Mercedes'.
+UPDATE PILOTOS P
+SET EQUIPO = (SELECT CODEQUIPO
+			  FROM EQUIPOS
+              WHERE NOMEQUIPO = 'MCLAREN')
+WHERE EQUIPO = (SELECT CODEQUIPO
+				FROM EQUIPOS
+				WHERE NOMEQUIPO = 'MERCEDES');
+
+
+-- 5. UPDATE de integridad: El piloto 'Felipe Massa' ha decidido que su nuevo amigo es 
+-- el piloto que más cobra de toda la parrilla. Actualiza su columna AMIGO usando una subconsulta.
+ 
+
+
+-- 6. UPDATE basado en resultados: Aumenta el presupuesto en 50,000 euros a aquellos equipos 
+-- que hayan logrado tener al menos un piloto en la posición 1 en cualquier Gran Premio.
+
+
+
+-- 7. DELETE con subconsulta: Elimina de la tabla RESULTADOS todos los registros de aquellos 
+-- pilotos que pertenezcan al equipo 'Renault'.
+
+
+
+-- 8. DELETE de registros huérfanos: Elimina a los pilotos que no tengan ninguna participación 
+-- registrada en la tabla RESULTADOS.
+
+
+
+-- 9. DELETE condicional: Elimina los equipos que no tengan ningún piloto contratado 
+-- (que no aparezcan en la tabla PILOTOS).
+
+
+
+-- 10. DELETE de seguridad: Borra todos los resultados del Gran Premio 'Australia' 
+-- (CODGP = 2) de aquellos pilotos que tienen un sueldo inferior a 1,000 euros.
+
+
+
+
 
 
 -- A. Muestra el nombre y el sueldo de todos los pilotos que ganen más de 5,000, ordenados de mayor a menor sueldo.
@@ -195,3 +320,25 @@ GROUP BY P.NOMPILOTO, E.NOMEQUIPO, A.NOMPILOTO;
 -- K. Encuentra los nombres de los pilotos que ganan más que la media de todos los pilotos (Subconsulta).
 -- L. Muestra los datos de los Grandes Premios en los que NO haya participado el piloto con CODPILOTO = 30.
 -- M. Informe completo: Nombre del Piloto, Nombre del Equipo, Suma total de PUNTOS y Nombre de su Amigo.
+-- ===============================================================================================================================
+-- N. Muestra los nombres de los pilotos en mayúsculas y su año de nacimiento (usa la función YEAR o similar).
+-- O. Calcula la antigüedad de los pilotos: Nombre y cuántos años han pasado desde su nacimiento hasta hoy.
+-- P. Lista los circuitos donde se han corrido Grandes Premios, eliminando los duplicados si los hubiera.
+-- Q. Muestra el nombre del equipo y el presupuesto formateado con el símbolo '$' al principio (usa CONCAT).
+-- R. Encuentra el nombre del piloto que tiene el sueldo más alto de toda la base de datos (sin usar LIMIT).
+-- S. Obtén el nombre de los pilotos cuya inicial sea 'F' y que pertenezcan al equipo con código 3.
+-- T. Lista los Grandes Premios (nombre y lugar) que se celebraron en la primera mitad del año 2020 (entre enero y junio).
+-- U. Muestra cada piloto y su sueldo mensual (sueldo dividido por 12), redondeado a dos decimales.
+-- V. Encuentra qué equipos tienen más de 2 pilotos registrados en la tabla PILOTOS.
+-- W. Muestra el nombre de los pilotos y el nombre del GP para todos aquellos que NO lograron puntuar (posiciones mayores a 10).
+-- ================================================================================================================================
+-- 1. INSERT masivo: Da de alta un resultado de '1ª' posición para todos los pilotos del equipo 'Ferrari' en un nuevo Gran Premio con CODGP = 10 (asume que el GP ya existe), con fecha de hoy.
+-- 2. INSERT con subconsulta: Inscribe a todos los pilotos que ganan más de 10,000 euros en el Gran Premio de 'España' (CODGP = 4), asignándoles la posición 10 a todos.
+-- 3. UPDATE complejo: Sube el sueldo un 15% a todos los pilotos cuyo equipo tenga un presupuesto superior a 400,000 euros.
+-- 4. UPDATE con Join: Cambia el equipo de todos los pilotos cuyo equipo actual sea 'McLaren' para que ahora pertenezcan al equipo 'Mercedes'.
+-- 5. UPDATE de integridad: El piloto 'Felipe Massa' ha decidido que su nuevo amigo es el piloto que más cobra de toda la parrilla. Actualiza su columna AMIGO usando una subconsulta.
+-- 6. UPDATE basado en resultados: Aumenta el presupuesto en 50,000 euros a aquellos equipos que hayan logrado tener al menos un piloto en la posición 1 en cualquier Gran Premio.
+-- 7. DELETE con subconsulta: Elimina de la tabla RESULTADOS todos los registros de aquellos pilotos que pertenezcan al equipo 'Renault'.
+-- 8. DELETE de registros huérfanos: Elimina a los pilotos que no tengan ninguna participación registrada en la tabla RESULTADOS.
+-- 9. DELETE condicional: Elimina los equipos que no tengan ningún piloto contratado (que no aparezcan en la tabla PILOTOS).
+-- 10. DELETE de seguridad: Borra todos los resultados del Gran Premio 'Australia' (CODGP = 2) de aquellos pilotos que tienen un sueldo inferior a 1,000 euros.
